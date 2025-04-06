@@ -104,7 +104,7 @@
         const objectURL = URL.createObjectURL(file);
         video.src = objectURL;
         video.style.display = 'block';
-        aiFeedback.textContent = "Video loaded. Ready to analyze.";
+        aiFeedback.textContent = "🎥 Video loaded. Ready for AI analysis.";
       } else {
         alert('Please select a valid MP4 file.');
       }
@@ -124,31 +124,35 @@
     }
 
     function unloopVideo() {
-      aiFeedback.textContent = "🔍 AI is analyzing video frames and audio for loop patterns...";
-      
-      // Simulate processing delay
-      setTimeout(() => {
-        // Simulated logic: cut 5 seconds from the end if it's a loop
-        if (video.duration > 10) {
-          const newEndTime = video.duration - 5;
-          aiFeedback.textContent = `✅ Loop detected! Trimming last 5 seconds. Playing unlooped version.`;
+      if (!video.src) {
+        aiFeedback.textContent = "⚠️ Load a video first!";
+        return;
+      }
 
-          video.pause();
+      aiFeedback.textContent = "🧠 AI is analyzing video frames and audio for loop patterns...";
+
+      setTimeout(() => {
+        // Simulate AI detection
+        if (video.duration > 10) {
+          const newEnd = video.duration - 5;
+
+          aiFeedback.textContent = "✅ Loop detected! Trimming last 5 seconds...";
+
+          // Start from beginning, play only up to newEnd
           video.currentTime = 0;
           video.play();
 
-          // Fake loop prevention: stop before looped segment
           const interval = setInterval(() => {
-            if (video.currentTime >= newEndTime) {
+            if (video.currentTime >= newEnd) {
               video.pause();
               clearInterval(interval);
-              aiFeedback.textContent += ` (Playback stopped before loop)`;
+              aiFeedback.textContent += " ▶️ Playback stopped before loop.";
             }
           }, 500);
         } else {
-          aiFeedback.textContent = `ℹ️ No obvious loop detected. Video seems fine.`;
+          aiFeedback.textContent = "ℹ️ No loop pattern detected. Video seems clean.";
         }
-      }, 2500);
+      }, 2500); // fake processing delay
     }
   </script>
 </body>
