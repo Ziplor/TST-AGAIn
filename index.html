@@ -1,92 +1,67 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌸 AI Video Unlooper</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-p+w3Ot4Ckl2+zR+ZOCqp9qkwnFtFyZkW3+KOEK5FQ1FvDzXYh6+vHq3EtgD1p7u+bOQbQofbSYq9IG8GuvvMIA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unlooper</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    video { max-width: 90%; margin: 10px 0; }
+    .issue-box { background: #ffe0e0; border: 1px solid #ffaaa8; padding: 8px; margin: 10px auto; width: 300px; }
+  </style>
 </head>
-<body class="bg-pink-100 min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-3xl w-full space-y-6">
-    <h1 class="text-3xl font-bold text-center text-pink-600">🎀 AI Video Unlooper</h1>
+<body>
+  <h1>🎥 Unloop Your Video</h1>
+  <input type="file" id="fileInput" accept="video/mp4" />
+  <button onclick="unloop()">Unloop</button>
 
-    <input type="file" id="videoInput" accept="video/mp4" class="block w-full p-2 border border-pink-300 rounded">
+  <div id="originalVideo"></div>
+  <div id="result"></div>
+  <div id="issuesContainer"></div>
 
-    <video id="originalVideo" controls class="hidden rounded-lg w-full mt-4"></video>
-    <button id="unloopBtn" class="hidden mt-4 w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded transition-all">🔍 Detect & Unloop</button>
+  <script>
+    async function unloop() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("Please upload a video");
 
-    <div id="results" class="hidden">
-      <h2 class="text-xl font-semibold text-pink-600 mt-6">🎬 Unlooped Video</h2>
-      <video id="unloopedVideo" controls class="rounded-lg w-full mt-2"></video>
+      document.getElementById("originalVideo").innerHTML = `<video controls src="${URL.createObjectURL(file)}"></video>`;
+      document.getElementById("result").innerHTML = "Processing...";
+      document.getElementById("issuesContainer").innerHTML = "";
 
-      <div class="flex justify-between items-center mt-3">
-        <a id="downloadLink" download="unlooped.mp4" class="bg-pink-400 hover:bg-pink-500 text-white py-2 px-4 rounded transition">⬇️ Download</a>
-        <button id="regenerateBtn" class="bg-purple-400 hover:bg-purple-500 text-white py-2 px-4 rounded transition">🔁 Regenerate</button>
-      </div>
+      const formData = new FormData();
+      formData.append('video', file);
 
-      <div class="mt-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 hidden" id="frameAlerts">
-        <h4 class="font-bold">⚠ Frame Issues Detected:</h4>
-        <ul id="frameList" class="list-disc pl-5"></ul>
-      </div>
-    </div>
-  </div>
+      try {
+        const response = await fetch('/api/unloop', {
+          method: 'POST',
+          body: formData
+        });
 
-<script>
-const videoInput = document.getElementById('videoInput');
-const originalVideo = document.getElementById('originalVideo');
-const unloopBtn = document.getElementById('unloopBtn');
-const unloopedVideo = document.getElementById('unloopedVideo');
-const downloadLink = document.getElementById('downloadLink');
-const frameList = document.getElementById('frameList');
-const frameAlerts = document.getElementById('frameAlerts');
-const regenerateBtn = document.getElementById('regenerateBtn');
-const results = document.getElementById('results');
+        const result = await response.json();
 
-let file;
+        if (!result.success) throw new Error("Processing failed");
 
-videoInput.addEventListener('change', () => {
-  file = videoInput.files[0];
-  const url = URL.createObjectURL(file);
-  originalVideo.src = url;
-  originalVideo.classList.remove('hidden');
-  unloopBtn.classList.remove('hidden');
-});
+        const uint8Array = new Uint8Array(result.video.data);
+        const blob = new Blob([uint8Array], { type: 'video/mp4' });
+        const videoURL = URL.createObjectURL(blob);
 
-function sendVideo(regenerate = false) {
-  const formData = new FormData();
-  formData.append('video', file);
-  formData.append('regenerate', regenerate);
+        document.getElementById("result").innerHTML = `<h3>🧠 Unlooped Result</h3><video controls src="${videoURL}"></video><br><button onclick="unloop()">Regenerate</button>`;
 
-  fetch('/api/unloop', {
-    method: 'POST',
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    const blob = new Blob([Uint8Array.from(data.video.data)], { type: 'video/mp4' });
-    const url = URL.createObjectURL(blob);
-    unloopedVideo.src = url;
-    downloadLink.href = url;
-    results.classList.remove('hidden');
+        if (result.issues?.length) {
+          result.issues.forEach(({ from, to }) => {
+            const box = document.createElement("div");
+            box.className = "issue-box";
+            box.innerText = `⚠️ Frame jump detected: from ${from.toFixed(2)}s to ${to.toFixed(2)}s`;
+            document.getElementById("issuesContainer").appendChild(box);
+          });
+        }
 
-    frameList.innerHTML = '';
-    if (data.issues && data.issues.length) {
-      frameAlerts.classList.remove('hidden');
-      data.issues.forEach((i) => {
-        const li = document.createElement('li');
-        li.textContent = `Jump from ${i.from}s to ${i.to}s`;
-        frameList.appendChild(li);
-      });
-    } else {
-      frameAlerts.classList.add('hidden');
+      } catch (err) {
+        console.error(err);
+        document.getElementById("result").innerText = "❌ Failed to process video.";
+      }
     }
-  });
-}
-
-unloopBtn.addEventListener('click', () => sendVideo());
-regenerateBtn.addEventListener('click', () => sendVideo(true));
-</script>
+  </script>
 </body>
 </html>
