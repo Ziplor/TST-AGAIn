@@ -1,29 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unloop MP4 Video</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-    h1 { color: #333; }
-    input, button { margin: 10px; padding: 10px; font-size: 16px; }
-    video { margin-top: 20px; width: 80%; max-width: 600px; border-radius: 8px; }
-    #status { color: #007bff; margin-top: 10px; }
-    a#downloadLink { display: block; margin-top: 15px; font-size: 18px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Video Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .video-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        video {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .controls button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <h1>🎬 Unloop MP4 Video</h1>
-  <p>Upload a looped MP4 video. We'll try to detect and clip repeated frames.</p>
-  <input type="file" id="videoInput" accept="video/mp4" />
-  <br />
-  <button onclick="trimLoop()">Unloop</button>
-  <p id="status"></p>
-  <video id="preview" controls></video>
-  <a id="downloadLink" download="unlooped.mp4">Download Result</a>
+    <div class="video-container">
+        <video id="myVideo" controls>
+            <source src="your-video-file.mp4" type="video/mp4">
+            <source src="your-video-file.ogg" type="video/ogg">
+            Your browser does not support the video tag.
+        </video>
+        <div class="controls">
+            <button onclick="playVideo()">Play</button>
+            <button onclick="pauseVideo()">Pause</button>
+            <button onclick="stopVideo()">Stop</button>
+        </div>
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.2/dist/ffmpeg.min.js"></script>
-  <script src="main.js"></script>
+    <script>
+        const video = document.getElementById('myVideo');
+
+        function playVideo() {
+            video.play();
+        }
+
+        function pauseVideo() {
+            video.pause();
+        }
+
+        function stopVideo() {
+            video.pause();
+            video.currentTime = 0;
+        }
+    </script>
 </body>
 </html>
