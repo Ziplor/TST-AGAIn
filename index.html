@@ -1,135 +1,94 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Unlooper</title>
   <style>
-    /* Basic styling */
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    video {
-      width: 100%;
-      border-radius: 8px;
-    }
-    .controls {
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .sidebar {
-      margin-top: 20px;
-      padding: 10px;
-      background: #ffdddd;
-      border-left: 5px solid #f44336;
-    }
-    .hidden {
-      display: none;
-    }
+    body { font-family: sans-serif; padding: 2rem; background: #f0f0f0; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    video { width: 100%; margin-bottom: 1rem; border-radius: 8px; }
+    .frame-alerts { background: #ffeeee; border-left: 5px solid #e53935; padding: 1rem; margin-top: 1rem; display: none; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h2>Upload Video</h2>
-    <input type="file" id="videoUpload" accept="video/mp4,video/x-m4v,video/*">
-    <video id="originalVideo" controls class="hidden"></video>
-    <div class="controls">
-      <button id="unloopButton" class="hidden">Detect & Unloop</button>
-    </div>
-    <video id="processedVideo" controls class="hidden"></video>
-    <div class="controls">
-      <button id="regenerateButton" class="hidden">Regenerate</button>
-    </div>
-    <div id="frameIssues" class="sidebar hidden">
-      <h3>Frame Inconsistencies Detected:</h3>
-      <ul id="issuesList"></ul>
+<div class="container">
+  <h1>🧠 AI Video Unlooper</h1>
+  <input type="file" id="videoInput" accept="video/mp4">
+  <br><br>
+  <video id="originalVideo" controls class="hidden"></video>
+  <button id="unloopBtn" class="hidden">Detect & Unloop</button>
+  <br><br>
+  <div id="results" class="hidden">
+    <h2>🎬 Unlooped Video</h2>
+    <video id="unloopedVideo" controls></video>
+    <a id="downloadLink" download="unlooped.mp4">⬇️ Download</a>
+    <br><br>
+    <button id="regenerateBtn">🔁 Regenerate</button>
+    <div class="frame-alerts" id="frameAlerts">
+      <h4>⚠ Frame Issues Detected:</h4>
+      <ul id="frameList"></ul>
     </div>
   </div>
+</div>
 
-  <script>
-    const videoUpload = document.getElementById('videoUpload');
-    const originalVideo = document.getElementById('originalVideo');
-    const unloopButton = document.getElementById('unloopButton');
-    const processedVideo = document.getElementById('processedVideo');
-    const regenerateButton = document.getElementById('regenerateButton');
-    const frameIssues = document.getElementById('frameIssues');
-    const issuesList = document.getElementById('issuesList');
+<script>
+const videoInput = document.getElementById('videoInput');
+const originalVideo = document.getElementById('originalVideo');
+const unloopBtn = document.getElementById('unloopBtn');
+const unloopedVideo = document.getElementById('unloopedVideo');
+const downloadLink = document.getElementById('downloadLink');
+const frameList = document.getElementById('frameList');
+const frameAlerts = document.getElementById('frameAlerts');
+const regenerateBtn = document.getElementById('regenerateBtn');
+const results = document.getElementById('results');
 
-    let uploadedFile = null;
+let file;
 
-    videoUpload.addEventListener('change', (event) => {
-      uploadedFile = event.target.files[0];
-      if (uploadedFile) {
-        const objectURL = URL.createObjectURL(uploadedFile);
-        originalVideo.src = objectURL;
-        originalVideo.classList.remove('hidden');
-        unloopButton.classList.remove('hidden');
-      }
-    });
+videoInput.addEventListener('change', () => {
+  file = videoInput.files[0];
+  const url = URL.createObjectURL(file);
+  originalVideo.src = url;
+  originalVideo.classList.remove('hidden');
+  unloopBtn.classList.remove('hidden');
+});
 
-    unloopButton.addEventListener('click', () => {
-      if (uploadedFile) {
-        processVideo(uploadedFile);
-      }
-    });
+function sendVideo(regenerate = false) {
+  const formData = new FormData();
+  formData.append('video', file);
+  formData.append('regenerate', regenerate);
 
-    regenerateButton.addEventListener('click', () => {
-      if (uploadedFile) {
-        processVideo(uploadedFile, true);
-      }
-    });
+  fetch('/api/unloop', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    const blob = new Blob([Uint8Array.from(data.video.data)], { type: 'video/mp4' });
+    const url = URL.createObjectURL(blob);
+    unloopedVideo.src = url;
+    downloadLink.href = url;
+    results.classList.remove('hidden');
 
-    function processVideo(file, isRegenerate = false) {
-      const formData = new FormData();
-      formData.append('video', file);
-
-      fetch('YOUR_BACKEND_API_URL', {
-        method: 'POST',
-        body: formData,
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const processedObjectURL = URL.createObjectURL(new Blob([data.processedVideo], { type: 'video/mp4' }));
-          processedVideo.src = processedObjectURL;
-          processedVideo.classList.remove('hidden');
-          regenerateButton.classList.remove('hidden');
-
-          // Display frame inconsistencies
-          issuesList.innerHTML = '';
-          if (data.frameIssues && data.frameIssues.length > 0) {
-            data.frameIssues.forEach(issue => {
-              const listItem = document.createElement('li');
-              listItem.textContent = `Time: ${issue.time}s - Issue: ${issue.description}`;
-              issuesList.appendChild(listItem);
-            });
-            frameIssues.classList.remove('hidden');
-          } else {
-            frameIssues.classList.add('hidden');
-          }
-        } else {
-          alert('Error processing video.');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error processing video.');
+    // Show frame issues
+    frameList.innerHTML = '';
+    if (data.issues && data.issues.length) {
+      frameAlerts.style.display = 'block';
+      data.issues.forEach((i) => {
+        const li = document.createElement('li');
+        li.textContent = `Jump from ${i.from}s to ${i.to}s`;
+        frameList.appendChild(li);
       });
+    } else {
+      frameAlerts.style.display = 'none';
     }
-  </script>
+  });
+}
 
+unloopBtn.addEventListener('click', () => sendVideo());
+regenerateBtn.addEventListener('click', () => sendVideo(true));
+</script>
 </body>
 </html>
