@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Video Player with Upload Feature</title>
+    <title>MP4 Video Player</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,7 +27,7 @@
         video {
             width: 100%;
             border-radius: 8px;
-            display: none; /* Hide video player until a file is selected */
+            display: none; /* Initially hide the video player */
         }
         .controls {
             display: flex;
@@ -65,9 +65,9 @@
 </head>
 <body>
     <div class="video-container">
-        <input type="file" id="videoFileInput" accept="video/*">
-        <label for="videoFileInput" class="upload-btn">Choose Video File</label>
-        <video id="myVideo" controls>
+        <input type="file" id="videoFileInput" accept="video/mp4">
+        <label for="videoFileInput" class="upload-btn">Choose MP4 Video File</label>
+        <video id="videoPlayer" controls>
             Your browser does not support the video tag.
         </video>
         <div class="controls">
@@ -78,30 +78,31 @@
     </div>
 
     <script>
-        const video = document.getElementById('myVideo');
-        const fileInput = document.getElementById('videoFileInput');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoFileInput = document.getElementById('videoFileInput');
 
-        fileInput.addEventListener('change', function(event) {
+        videoFileInput.addEventListener('change', function(event) {
             const file = event.target.files[0];
-            if (file) {
+            if (file && file.type === 'video/mp4') {
                 const objectURL = URL.createObjectURL(file);
-                video.src = objectURL;
-                video.style.display = 'block'; // Show video player
-                video.load();
+                videoPlayer.src = objectURL;
+                videoPlayer.style.display = 'block'; // Show the video player
+            } else {
+                alert('Please select a valid MP4 video file.');
             }
         });
 
         function playVideo() {
-            video.play();
+            videoPlayer.play();
         }
 
         function pauseVideo() {
-            video.pause();
+            videoPlayer.pause();
         }
 
         function stopVideo() {
-            video.pause();
-            video.currentTime = 0;
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
         }
     </script>
 </body>
