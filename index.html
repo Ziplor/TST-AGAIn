@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unloop MP4 Video</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+    h1 { color: #333; }
+    input, button { margin: 10px; padding: 10px; font-size: 16px; }
+    video { margin-top: 20px; width: 80%; max-width: 600px; border-radius: 8px; }
+    #status { color: #007bff; margin-top: 10px; }
+    a#downloadLink { display: block; margin-top: 15px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>🎬 Unloop MP4 Video</h1>
+  <p>Upload a looped MP4 video. We'll try to detect and clip repeated frames.</p>
+  <input type="file" id="videoInput" accept="video/mp4" />
+  <br />
+  <button onclick="trimLoop()">Unloop</button>
+  <p id="status"></p>
+  <video id="preview" controls></video>
+  <a id="downloadLink" download="unlooped.mp4">Download Result</a>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.2/dist/ffmpeg.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
