@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unlooper AI</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #fffbe6; }
+    video { max-width: 90%; margin: 10px 0; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
+    .issue-box { background: #ffe0e0; border: 1px solid #ffaaa8; padding: 8px; margin: 10px auto; width: 300px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>🎥 Unlooper AI</h1>
+  <input type="file" id="fileInput" accept="video/mp4" />
+  <button onclick="unloop()">Unloop</button>
+
+  <div id="originalVideo"></div>
+  <div id="result"></div>
+  <div id="issuesContainer"></div>
+
+  <script>
+    async function unloop() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("Please upload a video");
+
+      document.getElementById("originalVideo").innerHTML = `<video controls src="\${URL.createObjectURL(file)}"></video>`;
+      document.getElementById("result").innerHTML = "Processing...";
+      document.getElementById("issuesContainer").innerHTML = "";
+
+      const formData = new FormData();
+      formData.append('video', file);
+
+      try {
+        const response = await fetch('http://localhost:5000/api/unloop', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (!result.success) throw new Error("Processing failed");
+
+        const uint8Array = new Uint8Array(result.video);
+        const blob = new Blob([uint8Array], { type: 'video/mp4' });
+        const videoURL = URL.createObjectURL(blob);
+
+        document.getElementById("result").innerHTML = `<h3>🧠 Unlooped Result</h3><video controls src="\${videoURL}"></video><br><button onclick="unloop()">Regenerate</button>`;
+
+        if (result.issues?.length) {
+          result.issues.forEach((item, i) => {
+            const box = document.createElement("div");
+            box.className = "issue-box";
+            box.innerText = `⚠️ Issue #\${i+1}: ` + JSON.stringify(item);
+            document.getElementById("issuesContainer").appendChild(box);
+          });
+        }
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("result").innerText = "❌ Failed to process video.";
+      }
+    }
+  </script>
+</body>
+</html>
