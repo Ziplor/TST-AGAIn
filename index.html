@@ -1,189 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Video Unlooper</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Unlooper</title>
   <style>
+    /* Basic styling */
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0;
+      background-color: #f0f0f0;
       margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 20px;
     }
-
-    .video-container {
+    .container {
+      max-width: 800px;
+      margin: auto;
       background: #fff;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 800px;
-      max-width: 95%;
-      margin: 20px auto;
-      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-
     video {
       width: 100%;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      display: none;
+      border-radius: 8px;
     }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .upload-btn, .controls button, .ai-feedback, .download-link {
-      font-size: 16px;
-      margin: 5px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .upload-btn { background-color: #28a745; color: white; }
-    .upload-btn:hover { background-color: #218838; }
-
-    .controls button {
-      background-color: #007BFF;
-      color: white;
-    }
-
-    .controls button:hover {
-      background-color: #0056b3;
-    }
-
-    .unloop-btn {
-      background-color: #ff5722;
-      color: white;
-    }
-
-    .unloop-btn:hover {
-      background-color: #e64a19;
-    }
-
-    .ai-feedback {
+    .controls {
       margin-top: 10px;
-      font-style: italic;
-      color: #444;
+      display: flex;
+      justify-content: space-between;
     }
-
-    .unlooped-output {
-      margin-top: 30px;
+    .sidebar {
+      margin-top: 20px;
+      padding: 10px;
+      background: #ffdddd;
+      border-left: 5px solid #f44336;
+    }
+    .hidden {
       display: none;
-    }
-
-    .download-link {
-      background-color: #6c757d;
-      color: white;
-      text-decoration: none;
-    }
-
-    .download-link:hover {
-      background-color: #5a6268;
     }
   </style>
 </head>
 <body>
 
-  <div class="video-container">
-    <input type="file" id="videoFileInput" accept="video/mp4" />
-    <label for="videoFileInput" class="upload-btn">Choose MP4 Video File</label>
-    
-    <video id="videoPlayer" controls>
-      Your browser does not support the video tag.
-    </video>
-
+  <div class="container">
+    <h2>Upload Video</h2>
+    <input type="file" id="videoUpload" accept="video/mp4,video/x-m4v,video/*">
+    <video id="originalVideo" controls class="hidden"></video>
     <div class="controls">
-      <button onclick="playVideo()">Play</button>
-      <button onclick="pauseVideo()">Pause</button>
-      <button onclick="stopVideo()">Stop</button>
-      <button class="unloop-btn" onclick="unloopVideo()">Detect & Unloop (AI)</button>
+      <button id="unloopButton" class="hidden">Detect & Unloop</button>
     </div>
-
-    <div class="ai-feedback" id="aiFeedback">AI is standing by to detect loops...</div>
-
-    <div class="unlooped-output" id="unloopedOutput">
-      <h3>🎬 Unlooped Video (Preview)</h3>
-      <video id="unloopedPlayer" controls></video>
-      <br>
-      <a id="downloadLink" class="download-link" download="unlooped-video.mp4">⬇️ Download Unlooped Video</a>
+    <video id="processedVideo" controls class="hidden"></video>
+    <div class="controls">
+      <button id="regenerateButton" class="hidden">Regenerate</button>
+    </div>
+    <div id="frameIssues" class="sidebar hidden">
+      <h3>Frame Inconsistencies Detected:</h3>
+      <ul id="issuesList"></ul>
     </div>
   </div>
 
   <script>
-    const video = document.getElementById('videoPlayer');
-    const fileInput = document.getElementById('videoFileInput');
-    const aiFeedback = document.getElementById('aiFeedback');
-    const unloopedOutput = document.getElementById('unloopedOutput');
-    const unloopedPlayer = document.getElementById('unloopedPlayer');
-    const downloadLink = document.getElementById('downloadLink');
+    const videoUpload = document.getElementById('videoUpload');
+    const originalVideo = document.getElementById('originalVideo');
+    const unloopButton = document.getElementById('unloopButton');
+    const processedVideo = document.getElementById('processedVideo');
+    const regenerateButton = document.getElementById('regenerateButton');
+    const frameIssues = document.getElementById('frameIssues');
+    const issuesList = document.getElementById('issuesList');
 
-    let originalBlob = null;
+    let uploadedFile = null;
 
-    fileInput.addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      if (file && file.type === 'video/mp4') {
-        originalBlob = file;
-        const objectURL = URL.createObjectURL(file);
-        video.src = objectURL;
-        video.style.display = 'block';
-        aiFeedback.textContent = "🎥 Video loaded. Ready for AI analysis.";
-        unloopedOutput.style.display = 'none';
-      } else {
-        alert('Please select a valid MP4 file.');
+    videoUpload.addEventListener('change', (event) => {
+      uploadedFile = event.target.files[0];
+      if (uploadedFile) {
+        const objectURL = URL.createObjectURL(uploadedFile);
+        originalVideo.src = objectURL;
+        originalVideo.classList.remove('hidden');
+        unloopButton.classList.remove('hidden');
       }
     });
 
-    function playVideo() {
-      video.play();
-    }
-
-    function pauseVideo() {
-      video.pause();
-    }
-
-    function stopVideo() {
-      video.pause();
-      video.currentTime = 0;
-    }
-
-    function unloopVideo() {
-      if (!video.src || !originalBlob) {
-        aiFeedback.textContent = "⚠️ Load a video first!";
-        return;
+    unloopButton.addEventListener('click', () => {
+      if (uploadedFile) {
+        processVideo(uploadedFile);
       }
+    });
 
-      aiFeedback.textContent = "🧠 AI is analyzing video frames and audio for loop patterns...";
+    regenerateButton.addEventListener('click', () => {
+      if (uploadedFile) {
+        processVideo(uploadedFile, true);
+      }
+    });
 
-      setTimeout(() => {
-        // Simulate AI detection
-        if (video.duration > 10) {
-          const newEnd = video.duration - 5;
+    function processVideo(file, isRegenerate = false) {
+      const formData = new FormData();
+      formData.append('video', file);
 
-          aiFeedback.textContent = "✅ Loop detected! Creating unlooped preview below.";
+      fetch('YOUR_BACKEND_API_URL', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const processedObjectURL = URL.createObjectURL(new Blob([data.processedVideo], { type: 'video/mp4' }));
+          processedVideo.src = processedObjectURL;
+          processedVideo.classList.remove('hidden');
+          regenerateButton.classList.remove('hidden');
 
-          // Simulate trimming by setting video start/end time
-          video.currentTime = 0;
-          video.play();
-
-          // Create a fake "trimmed" version (mocked with the same video for demo)
-          const unloopedURL = URL.createObjectURL(originalBlob);
-          unloopedPlayer.src = unloopedURL;
-          unloopedPlayer.currentTime = 0;
-          unloopedOutput.style.display = 'block';
-
-          downloadLink.href = unloopedURL;
+          // Display frame inconsistencies
+          issuesList.innerHTML = '';
+          if (data.frameIssues && data.frameIssues.length > 0) {
+            data.frameIssues.forEach(issue => {
+              const listItem = document.createElement('li');
+              listItem.textContent = `Time: ${issue.time}s - Issue: ${issue.description}`;
+              issuesList.appendChild(listItem);
+            });
+            frameIssues.classList.remove('hidden');
+          } else {
+            frameIssues.classList.add('hidden');
+          }
         } else {
-          aiFeedback.textContent = "ℹ️ No loop pattern detected. Video seems clean.";
+          alert('Error processing video.');
         }
-      }, 2500); // fake AI delay
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing video.');
+      });
     }
   </script>
+
 </body>
 </html>
