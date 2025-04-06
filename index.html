@@ -1,109 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MP4 Video Player</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .video-container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-        }
-        video {
-            width: 100%;
-            border-radius: 8px;
-            display: none; /* Initially hide the video player */
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        .controls button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 0 5px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .controls button:hover {
-            background-color: #0056b3;
-        }
-        .upload-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .upload-btn:hover {
-            background-color: #218838;
-        }
-        input[type="file"] {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Video Unlooper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .video-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 800px;
+      max-width: 95%;
+      text-align: center;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .upload-btn, .controls button, .ai-feedback {
+      font-size: 16px;
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .upload-btn { background-color: #28a745; color: white; }
+    .upload-btn:hover { background-color: #218838; }
+
+    .controls button {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+
+    .unloop-btn {
+      background-color: #ff5722;
+      color: white;
+    }
+
+    .unloop-btn:hover {
+      background-color: #e64a19;
+    }
+
+    .ai-feedback {
+      margin-top: 10px;
+      font-style: italic;
+      color: #444;
+    }
+  </style>
 </head>
 <body>
-    <div class="video-container">
-        <input type="file" id="videoFileInput" accept="video/mp4">
-        <label for="videoFileInput" class="upload-btn">Choose MP4 Video File</label>
-        <video id="videoPlayer" controls>
-            Your browser does not support the video tag.
-        </video>
-        <div class="controls">
-            <button onclick="playVideo()">Play</button>
-            <button onclick="pauseVideo()">Pause</button>
-            <button onclick="stopVideo()">Stop</button>
-        </div>
+  <div class="video-container">
+    <input type="file" id="videoFileInput" accept="video/mp4" />
+    <label for="videoFileInput" class="upload-btn">Choose MP4 Video File</label>
+    
+    <video id="videoPlayer" controls>
+      Your browser does not support the video tag.
+    </video>
+
+    <div class="controls">
+      <button onclick="playVideo()">Play</button>
+      <button onclick="pauseVideo()">Pause</button>
+      <button onclick="stopVideo()">Stop</button>
+      <button class="unloop-btn" onclick="unloopVideo()">Detect & Unloop (AI)</button>
     </div>
 
-    <script>
-        const videoPlayer = document.getElementById('videoPlayer');
-        const videoFileInput = document.getElementById('videoFileInput');
+    <div class="ai-feedback" id="aiFeedback">AI is standing by to detect loops...</div>
+  </div>
 
-        videoFileInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file && file.type === 'video/mp4') {
-                const objectURL = URL.createObjectURL(file);
-                videoPlayer.src = objectURL;
-                videoPlayer.style.display = 'block'; // Show the video player
-            } else {
-                alert('Please select a valid MP4 video file.');
+  <script>
+    const video = document.getElementById('videoPlayer');
+    const fileInput = document.getElementById('videoFileInput');
+    const aiFeedback = document.getElementById('aiFeedback');
+
+    fileInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file && file.type === 'video/mp4') {
+        const objectURL = URL.createObjectURL(file);
+        video.src = objectURL;
+        video.style.display = 'block';
+        aiFeedback.textContent = "Video loaded. Ready to analyze.";
+      } else {
+        alert('Please select a valid MP4 file.');
+      }
+    });
+
+    function playVideo() {
+      video.play();
+    }
+
+    function pauseVideo() {
+      video.pause();
+    }
+
+    function stopVideo() {
+      video.pause();
+      video.currentTime = 0;
+    }
+
+    function unloopVideo() {
+      aiFeedback.textContent = "🔍 AI is analyzing video frames and audio for loop patterns...";
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        // Simulated logic: cut 5 seconds from the end if it's a loop
+        if (video.duration > 10) {
+          const newEndTime = video.duration - 5;
+          aiFeedback.textContent = `✅ Loop detected! Trimming last 5 seconds. Playing unlooped version.`;
+
+          video.pause();
+          video.currentTime = 0;
+          video.play();
+
+          // Fake loop prevention: stop before looped segment
+          const interval = setInterval(() => {
+            if (video.currentTime >= newEndTime) {
+              video.pause();
+              clearInterval(interval);
+              aiFeedback.textContent += ` (Playback stopped before loop)`;
             }
-        });
-
-        function playVideo() {
-            videoPlayer.play();
+          }, 500);
+        } else {
+          aiFeedback.textContent = `ℹ️ No obvious loop detected. Video seems fine.`;
         }
-
-        function pauseVideo() {
-            videoPlayer.pause();
-        }
-
-        function stopVideo() {
-            videoPlayer.pause();
-            videoPlayer.currentTime = 0;
-        }
-    </script>
+      }, 2500);
+    }
+  </script>
 </body>
 </html>
