@@ -4,35 +4,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Unlooper</title>
-  <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f0f0f0; }
-    .container { max-width: 800px; margin: auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    video { width: 100%; margin-bottom: 1rem; border-radius: 8px; }
-    .frame-alerts { background: #ffeeee; border-left: 5px solid #e53935; padding: 1rem; margin-top: 1rem; display: none; }
-    .hidden { display: none; }
-  </style>
+  <title>🌸 AI Video Unlooper</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-p+w3Ot4Ckl2+zR+ZOCqp9qkwnFtFyZkW3+KOEK5FQ1FvDzXYh6+vHq3EtgD1p7u+bOQbQofbSYq9IG8GuvvMIA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
-<div class="container">
-  <h1>🧠 AI Video Unlooper</h1>
-  <input type="file" id="videoInput" accept="video/mp4">
-  <br><br>
-  <video id="originalVideo" controls class="hidden"></video>
-  <button id="unloopBtn" class="hidden">Detect & Unloop</button>
-  <br><br>
-  <div id="results" class="hidden">
-    <h2>🎬 Unlooped Video</h2>
-    <video id="unloopedVideo" controls></video>
-    <a id="downloadLink" download="unlooped.mp4">⬇️ Download</a>
-    <br><br>
-    <button id="regenerateBtn">🔁 Regenerate</button>
-    <div class="frame-alerts" id="frameAlerts">
-      <h4>⚠ Frame Issues Detected:</h4>
-      <ul id="frameList"></ul>
+<body class="bg-pink-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-3xl w-full space-y-6">
+    <h1 class="text-3xl font-bold text-center text-pink-600">🎀 AI Video Unlooper</h1>
+
+    <input type="file" id="videoInput" accept="video/mp4" class="block w-full p-2 border border-pink-300 rounded">
+
+    <video id="originalVideo" controls class="hidden rounded-lg w-full mt-4"></video>
+    <button id="unloopBtn" class="hidden mt-4 w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded transition-all">🔍 Detect & Unloop</button>
+
+    <div id="results" class="hidden">
+      <h2 class="text-xl font-semibold text-pink-600 mt-6">🎬 Unlooped Video</h2>
+      <video id="unloopedVideo" controls class="rounded-lg w-full mt-2"></video>
+
+      <div class="flex justify-between items-center mt-3">
+        <a id="downloadLink" download="unlooped.mp4" class="bg-pink-400 hover:bg-pink-500 text-white py-2 px-4 rounded transition">⬇️ Download</a>
+        <button id="regenerateBtn" class="bg-purple-400 hover:bg-purple-500 text-white py-2 px-4 rounded transition">🔁 Regenerate</button>
+      </div>
+
+      <div class="mt-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 hidden" id="frameAlerts">
+        <h4 class="font-bold">⚠ Frame Issues Detected:</h4>
+        <ul id="frameList" class="list-disc pl-5"></ul>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
 const videoInput = document.getElementById('videoInput');
@@ -72,17 +71,16 @@ function sendVideo(regenerate = false) {
     downloadLink.href = url;
     results.classList.remove('hidden');
 
-    // Show frame issues
     frameList.innerHTML = '';
     if (data.issues && data.issues.length) {
-      frameAlerts.style.display = 'block';
+      frameAlerts.classList.remove('hidden');
       data.issues.forEach((i) => {
         const li = document.createElement('li');
         li.textContent = `Jump from ${i.from}s to ${i.to}s`;
         frameList.appendChild(li);
       });
     } else {
-      frameAlerts.style.display = 'none';
+      frameAlerts.classList.add('hidden');
     }
   });
 }
