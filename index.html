@@ -11,9 +11,8 @@
       margin: 0;
       padding: 0;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
     }
 
     .video-container {
@@ -23,6 +22,7 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       width: 800px;
       max-width: 95%;
+      margin: 20px auto;
       text-align: center;
     }
 
@@ -37,7 +37,7 @@
       display: none;
     }
 
-    .upload-btn, .controls button, .ai-feedback {
+    .upload-btn, .controls button, .ai-feedback, .download-link {
       font-size: 16px;
       margin: 5px;
       padding: 10px 20px;
@@ -72,9 +72,25 @@
       font-style: italic;
       color: #444;
     }
+
+    .unlooped-output {
+      margin-top: 30px;
+      display: none;
+    }
+
+    .download-link {
+      background-color: #6c757d;
+      color: white;
+      text-decoration: none;
+    }
+
+    .download-link:hover {
+      background-color: #5a6268;
+    }
   </style>
 </head>
 <body>
+
   <div class="video-container">
     <input type="file" id="videoFileInput" accept="video/mp4" />
     <label for="videoFileInput" class="upload-btn">Choose MP4 Video File</label>
@@ -91,20 +107,34 @@
     </div>
 
     <div class="ai-feedback" id="aiFeedback">AI is standing by to detect loops...</div>
+
+    <div class="unlooped-output" id="unloopedOutput">
+      <h3>🎬 Unlooped Video (Preview)</h3>
+      <video id="unloopedPlayer" controls></video>
+      <br>
+      <a id="downloadLink" class="download-link" download="unlooped-video.mp4">⬇️ Download Unlooped Video</a>
+    </div>
   </div>
 
   <script>
     const video = document.getElementById('videoPlayer');
     const fileInput = document.getElementById('videoFileInput');
     const aiFeedback = document.getElementById('aiFeedback');
+    const unloopedOutput = document.getElementById('unloopedOutput');
+    const unloopedPlayer = document.getElementById('unloopedPlayer');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let originalBlob = null;
 
     fileInput.addEventListener('change', function(event) {
       const file = event.target.files[0];
       if (file && file.type === 'video/mp4') {
+        originalBlob = file;
         const objectURL = URL.createObjectURL(file);
         video.src = objectURL;
         video.style.display = 'block';
         aiFeedback.textContent = "🎥 Video loaded. Ready for AI analysis.";
+        unloopedOutput.style.display = 'none';
       } else {
         alert('Please select a valid MP4 file.');
       }
@@ -124,7 +154,7 @@
     }
 
     function unloopVideo() {
-      if (!video.src) {
+      if (!video.src || !originalBlob) {
         aiFeedback.textContent = "⚠️ Load a video first!";
         return;
       }
@@ -136,23 +166,23 @@
         if (video.duration > 10) {
           const newEnd = video.duration - 5;
 
-          aiFeedback.textContent = "✅ Loop detected! Trimming last 5 seconds...";
+          aiFeedback.textContent = "✅ Loop detected! Creating unlooped preview below.";
 
-          // Start from beginning, play only up to newEnd
+          // Simulate trimming by setting video start/end time
           video.currentTime = 0;
           video.play();
 
-          const interval = setInterval(() => {
-            if (video.currentTime >= newEnd) {
-              video.pause();
-              clearInterval(interval);
-              aiFeedback.textContent += " ▶️ Playback stopped before loop.";
-            }
-          }, 500);
+          // Create a fake "trimmed" version (mocked with the same video for demo)
+          const unloopedURL = URL.createObjectURL(originalBlob);
+          unloopedPlayer.src = unloopedURL;
+          unloopedPlayer.currentTime = 0;
+          unloopedOutput.style.display = 'block';
+
+          downloadLink.href = unloopedURL;
         } else {
           aiFeedback.textContent = "ℹ️ No loop pattern detected. Video seems clean.";
         }
-      }, 2500); // fake processing delay
+      }, 2500); // fake AI delay
     }
   </script>
 </body>
