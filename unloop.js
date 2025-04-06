@@ -3,7 +3,6 @@ import path from 'path';
 import formidable from 'formidable';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegStatic from 'ffmpeg-static';
-import { spawn } from 'child_process';
 
 export const config = {
   api: {
@@ -35,19 +34,19 @@ export default async function handler(req, res) {
       await new Promise((resolve, reject) => {
         ffmpeg(inputPath)
           .noAudio()
-          .outputOptions('-t 5')
+          .outputOptions('-t 5') // simulate an unlooped result
           .on('end', resolve)
           .on('error', reject)
           .save(outputPath);
       });
 
-      const issues = fakeDetectLoop(inputPath);
       const buffer = fs.readFileSync(outputPath);
+      const issues = fakeDetectLoop(inputPath);
 
       res.setHeader('Content-Type', 'application/json');
       res.status(200).json({
         success: true,
-        video: { data: Array.from(buffer) },
+        video: { data: [...buffer] },
         issues,
       });
 
